@@ -22,9 +22,9 @@ public class SqlSettingsRepository : ISqlSettingsRepository
         const string query = "SELECT * FROM vNew_BankServiceSettings";
         var table = new DataTable();
 
-        await using var connection = new SqlConnection(_connectionString);
-        await using var command = new SqlCommand(query, connection);
-        await using var adapter = new SqlDataAdapter(command);
+        using var connection = new SqlConnection(_connectionString);
+        using var command = new SqlCommand(query, connection);
+        using var adapter = new SqlDataAdapter(command);
 
         await connection.OpenAsync();
         adapter.Fill(table);
