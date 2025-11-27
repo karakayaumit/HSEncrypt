@@ -31,7 +31,7 @@ public class SqlSettingsRepository : ISqlSettingsRepository
 
     public async Task<DataTable> LoadSettingsAsync()
     {
-        const string query = "SELECT * FROM vNew_BankServiceSettings";
+        const string query = "SELECT * FROM vNew_BankServiceSettings WHERE DeletionStateCode = 0";
         var table = new DataTable();
 
         using var connection = new SqlConnection(_currentConnectionString);
