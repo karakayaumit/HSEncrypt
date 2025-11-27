@@ -84,6 +84,7 @@ public partial class MainForm : Form
             DataTable settings = await _repository.LoadSettingsAsync();
             _settingsGrid.DataSource = settings;
             ConfigureGridColumns();
+            ApplyRowSpacing();
             ResetSelections();
             UpdateButtonState();
         }
@@ -102,6 +103,7 @@ public partial class MainForm : Form
         _refreshButton.Enabled = !isLoading;
         _primaryActionButton.Enabled = !isLoading && HasCheckedRows();
         _secondaryActionButton.Enabled = !isLoading && HasCheckedRows();
+        _selectAllButton.Enabled = !isLoading && _settingsGrid.Rows.Count > 0;
         Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
     }
 
@@ -110,6 +112,7 @@ public partial class MainForm : Form
         bool hasSelection = HasCheckedRows();
         _primaryActionButton.Enabled = hasSelection;
         _secondaryActionButton.Enabled = hasSelection;
+        _selectAllButton.Enabled = _settingsGrid.Rows.Count > 0;
     }
 
     private void HandlePrimaryAction()
@@ -230,6 +233,31 @@ public partial class MainForm : Form
         {
             row.Cells[SelectionColumnName].Value = false;
             row.Selected = false;
+        }
+    }
+
+    private void SelectAllRows()
+    {
+        if (!HasSelectionColumn)
+        {
+            return;
+        }
+
+        foreach (DataGridViewRow row in _settingsGrid.Rows)
+        {
+            row.Cells[SelectionColumnName].Value = true;
+            row.Selected = true;
+        }
+
+        UpdateButtonState();
+    }
+
+    private void ApplyRowSpacing()
+    {
+        foreach (DataGridViewRow row in _settingsGrid.Rows)
+        {
+            row.Height = _settingsGrid.RowTemplate.Height;
+            row.DefaultCellStyle.Padding = _settingsGrid.RowTemplate.DefaultCellStyle.Padding;
         }
     }
 
