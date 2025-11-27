@@ -10,6 +10,7 @@ public partial class MainForm : Form
 {
     private readonly ISqlSettingsRepository _repository;
     private bool _connectionEstablished;
+    private bool HasSelectionColumn => _settingsGrid.Columns.Contains(SelectionColumnName);
     private static readonly string[] VisibleColumns =
     {
         "New_BankServiceSettingsId",
@@ -186,6 +187,11 @@ public partial class MainForm : Form
 
     private IEnumerable<DataRow> GetCheckedDataRows()
     {
+        if (!HasSelectionColumn)
+        {
+            return Enumerable.Empty<DataRow>();
+        }
+
         return _settingsGrid.Rows
             .Cast<DataGridViewRow>()
             .Where(IsRowChecked)
@@ -196,12 +202,13 @@ public partial class MainForm : Form
 
     private bool HasCheckedRows()
     {
-        return _settingsGrid.Rows.Cast<DataGridViewRow>().Any(IsRowChecked);
+        return HasSelectionColumn && _settingsGrid.Rows.Cast<DataGridViewRow>().Any(IsRowChecked);
     }
 
-    private static bool IsRowChecked(DataGridViewRow row)
+    private bool IsRowChecked(DataGridViewRow row)
     {
-        return row.Cells[SelectionColumnName].Value is bool isChecked && isChecked;
+        return row.DataGridView?.Columns.Contains(SelectionColumnName) == true &&
+               row.Cells[SelectionColumnName].Value is bool isChecked && isChecked;
     }
 
     private static int GetDisplayIndex(string columnKey)
@@ -214,6 +221,11 @@ public partial class MainForm : Form
 
     private void ResetSelections()
     {
+        if (!HasSelectionColumn)
+        {
+            return;
+        }
+
         foreach (DataGridViewRow row in _settingsGrid.Rows)
         {
             row.Cells[SelectionColumnName].Value = false;
