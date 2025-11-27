@@ -21,4 +21,13 @@ Bu depo, `vNew_BankServiceSettings` tablosundaki verileri gösteren örnek bir W
    ```
 3. Grid otomatik olarak `vNew_BankServiceSettings` verilerini yükler; satır seçerek butonlar üzerinden işlemleri tetikleyebilirsiniz.
 
+### Hızlı derleme (Windows)
+`NETSDK1004: project.assets.json not found` hatasını önlemek için önce NuGet paketlerini geri yüklemek gerekir. Aşağıdaki PowerShell betiği hem geri yüklemeyi hem de derlemeyi tek adımda yapar:
+
+```powershell
+./build.ps1 -Configuration Debug
+```
+
+`-Configuration Release` parametresiyle Release derlemesi de alınabilir.
+
 > Not: Bu ortamda .NET SDK kurulu olmadığı için CI veya test komutları çalıştırılamadı.
