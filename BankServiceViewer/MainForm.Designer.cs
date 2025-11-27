@@ -65,18 +65,18 @@ public partial class MainForm
         _buttonPanel.Dock = DockStyle.Fill;
         _buttonPanel.AutoSize = true;
         _buttonPanel.FlowDirection = FlowDirection.LeftToRight;
+        _buttonPanel.Controls.Add(_selectAllButton);
         _buttonPanel.Controls.Add(_refreshButton);
         _buttonPanel.Controls.Add(_primaryActionButton);
         _buttonPanel.Controls.Add(_secondaryActionButton);
-        _buttonPanel.Controls.Add(_selectAllButton);
 
         _layout.ColumnCount = 1;
         _layout.RowCount = 2;
         _layout.Dock = DockStyle.Fill;
-        _layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         _layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        _layout.Controls.Add(_settingsGrid, 0, 0);
-        _layout.Controls.Add(_buttonPanel, 0, 1);
+        _layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        _layout.Controls.Add(_buttonPanel, 0, 0);
+        _layout.Controls.Add(_settingsGrid, 0, 1);
 
         AutoScaleDimensions = new SizeF(8F, 20F);
         AutoScaleMode = AutoScaleMode.Font;
