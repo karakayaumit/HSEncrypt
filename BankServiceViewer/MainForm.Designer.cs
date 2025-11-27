@@ -27,7 +27,8 @@ public partial class MainForm
         _settingsGrid.AllowUserToAddRows = false;
         _settingsGrid.AllowUserToDeleteRows = false;
         _settingsGrid.AllowUserToOrderColumns = true;
-        _settingsGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        _settingsGrid.AllowUserToResizeColumns = true;
+        _settingsGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         _settingsGrid.Dock = DockStyle.Fill;
         _settingsGrid.MultiSelect = true;
         _settingsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
