@@ -35,12 +35,58 @@ public class SqlSettingsRepository : ISqlSettingsRepository
         var table = new DataTable();
 
         using var connection = new SqlConnection(_currentConnectionString);
+        await connection.OpenAsync();
+
+        await CreateBackupIfNeededAsync(connection);
+
         using var command = new SqlCommand(query, connection);
         using var adapter = new SqlDataAdapter(command);
-
-        await connection.OpenAsync();
         adapter.Fill(table);
 
         return table;
+    }
+
+    private static async Task CreateBackupIfNeededAsync(SqlConnection connection)
+    {
+        string backupTableName = await GetAvailableBackupTableNameAsync(connection);
+
+        string backupQuery = $"SELECT * INTO [{backupTableName}] FROM vNew_BankServiceSettings WHERE DeletionStateCode = 0";
+        using var backupCommand = new SqlCommand(backupQuery, connection);
+        await backupCommand.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<string> GetAvailableBackupTableNameAsync(SqlConnection connection)
+    {
+        int attempt = 0;
+
+        while (true)
+        {
+            string suffix = attempt switch
+            {
+                0 => string.Empty,
+                1 => "2",
+                2 => "3",
+                _ => (attempt + 1).ToString()
+            };
+
+            string candidate = $"TEMP{suffix}_vNew_BankServiceSettings";
+
+            if (!await TableExistsAsync(connection, candidate))
+            {
+                return candidate;
+            }
+
+            attempt++;
+        }
+    }
+
+    private static async Task<bool> TableExistsAsync(SqlConnection connection, string tableName)
+    {
+        const string existsQuery = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @tableName";
+
+        using var command = new SqlCommand(existsQuery, connection);
+        command.Parameters.AddWithValue("@tableName", tableName);
+
+        return await command.ExecuteScalarAsync() is not null;
     }
 }
