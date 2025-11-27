@@ -31,6 +31,8 @@ public partial class MainForm
         _settingsGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         _settingsGrid.RowHeadersVisible = false;
         _settingsGrid.SelectionChanged += (_, _) => UpdateButtonState();
+        _settingsGrid.CurrentCellDirtyStateChanged += SettingsGridOnCurrentCellDirtyStateChanged;
+        _settingsGrid.CellValueChanged += SettingsGridOnCellValueChanged;
 
         _refreshButton.Text = "Yenile";
         _refreshButton.AutoSize = true;
