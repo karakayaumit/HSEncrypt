@@ -11,6 +11,7 @@ public class SqlSettingsRepository : ISqlSettingsRepository
 
     private readonly string _connectionString;
     private string _currentConnectionString;
+    private bool _backupCreated;
 
     public SqlSettingsRepository()
     {
@@ -37,7 +38,11 @@ public class SqlSettingsRepository : ISqlSettingsRepository
         using var connection = new SqlConnection(_currentConnectionString);
         await connection.OpenAsync();
 
-        await CreateBackupIfNeededAsync(connection);
+        if (!_backupCreated)
+        {
+            await CreateBackupIfNeededAsync(connection);
+            _backupCreated = true;
+        }
 
         using var command = new SqlCommand(query, connection);
         using var adapter = new SqlDataAdapter(command);
