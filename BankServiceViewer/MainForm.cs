@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,6 +10,32 @@ public partial class MainForm : Form
 {
     private readonly ISqlSettingsRepository _repository;
     private bool _connectionEstablished;
+    private static readonly string[] VisibleColumns =
+    {
+        "New_BankServiceSettingsId",
+        "BankServiceSettinName",
+        "CreatedOn",
+        "ModifiedOn",
+        "OwningBusinessUnit",
+        "OwningBusinessUnitName",
+        "statuscode",
+        "new_BankId",
+        "new_BankIdName",
+        "new_FirmId",
+        "new_FirmIdName",
+        "new_UserName",
+        "new_Password",
+        "new_SecureToken",
+        "new_FirmCode",
+        "new_SWIFT",
+        "new_IsAutomationSchedule",
+        "new_ModuleIdName",
+        "new_PrivateKey",
+        "new_RefreshToken",
+        "new_RefreshTokenDate"
+    };
+
+    private const string SelectionColumnName = "SelectRow";
 
     public MainForm()
     {
@@ -55,6 +82,8 @@ public partial class MainForm : Form
         {
             DataTable settings = await _repository.LoadSettingsAsync();
             _settingsGrid.DataSource = settings;
+            ConfigureGridColumns();
+            ResetSelections();
             UpdateButtonState();
         }
         catch (Exception ex)
@@ -70,26 +99,21 @@ public partial class MainForm : Form
     private void ToggleButtonsWhileLoading(bool isLoading)
     {
         _refreshButton.Enabled = !isLoading;
-        _primaryActionButton.Enabled = !isLoading && _settingsGrid.SelectedRows.Count > 0;
-        _secondaryActionButton.Enabled = !isLoading && _settingsGrid.SelectedRows.Count > 0;
+        _primaryActionButton.Enabled = !isLoading && HasCheckedRows();
+        _secondaryActionButton.Enabled = !isLoading && HasCheckedRows();
         Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
     }
 
     private void UpdateButtonState()
     {
-        bool hasSelection = _settingsGrid.SelectedRows.Count > 0;
+        bool hasSelection = HasCheckedRows();
         _primaryActionButton.Enabled = hasSelection;
         _secondaryActionButton.Enabled = hasSelection;
     }
 
     private void HandlePrimaryAction()
     {
-        var selectedRows = _settingsGrid.SelectedRows
-            .Cast<DataGridViewRow>()
-            .Select(row => row.DataBoundItem as DataRowView)
-            .Where(view => view?.Row is not null)
-            .Select(view => view!.Row)
-            .ToList();
+        var selectedRows = GetCheckedDataRows().ToList();
 
         if (selectedRows.Count == 0)
         {
@@ -104,13 +128,119 @@ public partial class MainForm : Form
 
     private void HandleSecondaryAction()
     {
-        if (_settingsGrid.CurrentRow?.DataBoundItem is not DataRowView view || view.Row is null)
+        var selectedRow = GetCheckedDataRows().FirstOrDefault();
+
+        if (selectedRow is null)
         {
             MessageBox.Show(this, "Geçerli bir satır bulunamadı.", "Satır yok", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        using var details = new SettingDetailsDialog(view.Row);
+        using var details = new SettingDetailsDialog(selectedRow);
         details.ShowDialog(this);
+    }
+
+    private void ConfigureGridColumns()
+    {
+        EnsureSelectionColumn();
+
+        foreach (DataGridViewColumn column in _settingsGrid.Columns)
+        {
+            if (column.Name == SelectionColumnName)
+            {
+                column.DisplayIndex = 0;
+                column.ReadOnly = false;
+                continue;
+            }
+
+            string columnKey = column.DataPropertyName ?? column.Name;
+            bool isVisible = VisibleColumns.Contains(columnKey, StringComparer.OrdinalIgnoreCase);
+            column.Visible = isVisible;
+
+            if (isVisible)
+            {
+                column.DisplayIndex = GetDisplayIndex(columnKey) + 1;
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            }
+        }
+    }
+
+    private void EnsureSelectionColumn()
+    {
+        if (_settingsGrid.Columns.Contains(SelectionColumnName))
+        {
+            return;
+        }
+
+        var selectionColumn = new DataGridViewCheckBoxColumn
+        {
+            Name = SelectionColumnName,
+            HeaderText = string.Empty,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+            ReadOnly = false,
+            Frozen = true
+        };
+
+        _settingsGrid.Columns.Insert(0, selectionColumn);
+    }
+
+    private IEnumerable<DataRow> GetCheckedDataRows()
+    {
+        return _settingsGrid.Rows
+            .Cast<DataGridViewRow>()
+            .Where(IsRowChecked)
+            .Select(row => row.DataBoundItem as DataRowView)
+            .Where(view => view?.Row is not null)
+            .Select(view => view!.Row);
+    }
+
+    private bool HasCheckedRows()
+    {
+        return _settingsGrid.Rows.Cast<DataGridViewRow>().Any(IsRowChecked);
+    }
+
+    private static bool IsRowChecked(DataGridViewRow row)
+    {
+        return row.Cells[SelectionColumnName].Value is bool isChecked && isChecked;
+    }
+
+    private static int GetDisplayIndex(string columnKey)
+    {
+        int index = Array.FindIndex(VisibleColumns, column =>
+            string.Equals(column, columnKey, StringComparison.OrdinalIgnoreCase));
+
+        return index >= 0 ? index : VisibleColumns.Length;
+    }
+
+    private void ResetSelections()
+    {
+        foreach (DataGridViewRow row in _settingsGrid.Rows)
+        {
+            row.Cells[SelectionColumnName].Value = false;
+            row.Selected = false;
+        }
+    }
+
+    private void SettingsGridOnCurrentCellDirtyStateChanged(object? sender, EventArgs e)
+    {
+        if (_settingsGrid.IsCurrentCellDirty && _settingsGrid.CurrentCell is DataGridViewCheckBoxCell)
+        {
+            _settingsGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+    }
+
+    private void SettingsGridOnCellValueChanged(object? sender, DataGridViewCellEventArgs e)
+    {
+        if (e.RowIndex < 0 || e.ColumnIndex < 0)
+        {
+            return;
+        }
+
+        if (_settingsGrid.Columns[e.ColumnIndex].Name == SelectionColumnName)
+        {
+            var row = _settingsGrid.Rows[e.RowIndex];
+            row.Selected = IsRowChecked(row);
+            UpdateButtonState();
+        }
     }
 }
