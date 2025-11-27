@@ -8,16 +8,48 @@ namespace BankServiceViewer;
 public partial class MainForm : Form
 {
     private readonly ISqlSettingsRepository _repository;
+    private bool _connectionEstablished;
 
     public MainForm()
     {
         InitializeComponent();
         _repository = new SqlSettingsRepository();
-        Load += async (_, _) => await RefreshDataAsync();
+        Load += async (_, _) => await InitializeAndLoadAsync();
+    }
+
+    private async Task InitializeAndLoadAsync()
+    {
+        if (!TryEstablishConnection())
+        {
+            Close();
+            return;
+        }
+
+        await RefreshDataAsync();
+    }
+
+    private bool TryEstablishConnection()
+    {
+        using var dialog = new ConnectionDialog();
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return false;
+        }
+
+        _repository.UpdateConnectionString(dialog.ConnectionString);
+        _connectionEstablished = true;
+        return true;
     }
 
     private async Task RefreshDataAsync()
     {
+        if (!_connectionEstablished)
+        {
+            MessageBox.Show(this, "Lütfen önce veri tabanı bağlantısını yapın.", "Bağlantı yok", MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
         ToggleButtonsWhileLoading(true);
         try
         {
