@@ -21,6 +21,7 @@ public partial class MainForm : Form
         "new_ModuleIdName",
         "new_UserName",
         "new_Password",
+        "new_new_EncryptPassword",
         "new_SecureToken",
         "new_FirmCode",
         "new_PrivateKey",
@@ -74,6 +75,7 @@ public partial class MainForm : Form
         try
         {
             DataTable settings = await _repository.LoadSettingsAsync();
+            AddEncryptedPasswords(settings);
             _settingsGrid.DataSource = settings;
             ConfigureGridColumns();
             ApplyRowSpacing();
@@ -87,6 +89,22 @@ public partial class MainForm : Form
         finally
         {
             ToggleButtonsWhileLoading(false);
+        }
+    }
+
+    private static void AddEncryptedPasswords(DataTable settings)
+    {
+        const string encryptedColumnName = "new_new_EncryptPassword";
+        if (!settings.Columns.Contains(encryptedColumnName))
+        {
+            var encryptedColumn = settings.Columns.Add(encryptedColumnName, typeof(string));
+            encryptedColumn.ReadOnly = true;
+        }
+
+        foreach (DataRow row in settings.Rows)
+        {
+            string password = row["new_Password"]?.ToString() ?? string.Empty;
+            row[encryptedColumnName] = Encrypt.EncryptString(password);
         }
     }
 
@@ -152,11 +170,13 @@ public partial class MainForm : Form
             string columnKey = column.DataPropertyName ?? column.Name;
             bool isVisible = VisibleColumns.Contains(columnKey, StringComparer.OrdinalIgnoreCase);
             column.Visible = isVisible;
+            column.ReadOnly = true;
 
             if (isVisible)
             {
                 column.DisplayIndex = GetDisplayIndex(columnKey) + 1;
-                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                column.Width = Math.Max(column.Width, 150);
             }
         }
     }
