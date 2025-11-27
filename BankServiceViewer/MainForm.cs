@@ -97,15 +97,19 @@ public partial class MainForm : Form
         const string encryptedColumnName = "new_new_EncryptPassword";
         if (!settings.Columns.Contains(encryptedColumnName))
         {
-            var encryptedColumn = settings.Columns.Add(encryptedColumnName, typeof(string));
-            encryptedColumn.ReadOnly = true;
+            settings.Columns.Add(encryptedColumnName, typeof(string));
         }
+
+        var encryptedColumn = settings.Columns[encryptedColumnName];
+        encryptedColumn.ReadOnly = false;
 
         foreach (DataRow row in settings.Rows)
         {
             string password = row["new_Password"]?.ToString() ?? string.Empty;
             row[encryptedColumnName] = Encrypt.EncryptString(password);
         }
+
+        encryptedColumn.ReadOnly = true;
     }
 
     private void ToggleButtonsWhileLoading(bool isLoading)
