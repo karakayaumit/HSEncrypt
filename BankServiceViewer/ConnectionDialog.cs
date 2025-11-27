@@ -54,8 +54,8 @@ public class ConnectionDialog : Form
             Enabled = false
         };
 
-        _connectButton = new Button { Text = "Bağlantı Aç", AutoSize = true };
-        _okButton = new Button { Text = "Tamam", AutoSize = true, Enabled = false, DialogResult = DialogResult.OK };
+        _connectButton = new Button { Text = "Bağlantı Aç", AutoSize = true, Margin = new Padding(0, 10, 0, 6) };
+        _okButton = new Button { Text = "Bağlan", AutoSize = true, Enabled = false, DialogResult = DialogResult.OK };
         var cancelButton = new Button { Text = "İptal", AutoSize = true, DialogResult = DialogResult.Cancel };
 
         _statusLabel = new Label
@@ -82,7 +82,7 @@ public class ConnectionDialog : Form
         var layout = new TableLayoutPanel
         {
             ColumnCount = 2,
-            RowCount = 6,
+            RowCount = 7,
             Dock = DockStyle.Fill,
             AutoSize = true,
             Padding = new Padding(4),
@@ -97,6 +97,7 @@ public class ConnectionDialog : Form
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         layout.Controls.Add(new Label { Text = "Data Source", AutoSize = true, Margin = new Padding(3, 6, 3, 6) }, 0, 0);
         layout.Controls.Add(_dataSourceTextBox, 1, 0);
@@ -104,8 +105,12 @@ public class ConnectionDialog : Form
         layout.Controls.Add(_userIdTextBox, 1, 1);
         layout.Controls.Add(new Label { Text = "Password", AutoSize = true, Margin = new Padding(3, 6, 3, 6) }, 0, 2);
         layout.Controls.Add(_passwordTextBox, 1, 2);
-        layout.Controls.Add(new Label { Text = "Veri Tabanı", AutoSize = true, Margin = new Padding(3, 6, 3, 6) }, 0, 3);
-        layout.Controls.Add(_databaseComboBox, 1, 3);
+
+        layout.Controls.Add(_connectButton, 0, 3);
+        layout.SetColumnSpan(_connectButton, 2);
+
+        layout.Controls.Add(new Label { Text = "Veri Tabanı", AutoSize = true, Margin = new Padding(3, 6, 3, 6) }, 0, 4);
+        layout.Controls.Add(_databaseComboBox, 1, 4);
 
         var buttonPanel = new FlowLayoutPanel
         {
@@ -115,14 +120,13 @@ public class ConnectionDialog : Form
             Margin = new Padding(0, 10, 0, 0)
         };
 
-        buttonPanel.Controls.Add(_connectButton);
         buttonPanel.Controls.Add(_okButton);
         buttonPanel.Controls.Add(cancelButton);
 
-        layout.Controls.Add(buttonPanel, 0, 4);
+        layout.Controls.Add(buttonPanel, 0, 5);
         layout.SetColumnSpan(buttonPanel, 2);
 
-        layout.Controls.Add(_statusLabel, 0, 5);
+        layout.Controls.Add(_statusLabel, 0, 6);
         layout.SetColumnSpan(_statusLabel, 2);
 
         return layout;
