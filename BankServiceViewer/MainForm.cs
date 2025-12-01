@@ -129,7 +129,7 @@ public partial class MainForm : Form
         _selectAllButton.Enabled = _settingsGrid.Rows.Count > 0;
     }
 
-    private void HandlePrimaryAction()
+    private async Task HandlePrimaryActionAsync()
     {
         var selectedRows = GetCheckedDataRows().ToList();
 
@@ -139,9 +139,41 @@ public partial class MainForm : Form
             return;
         }
 
-        string message = "Seçilen satırlar için işleminizi burada uygulayabilirsiniz.\n\n" +
-                         string.Join("\n", selectedRows.Select(r => r[0]?.ToString() ?? "<boş>"));
-        MessageBox.Show(this, message, "İşlem Önizleme", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        var updates = selectedRows
+            .Select(row => new
+            {
+                HasId = Guid.TryParse(row["New_BankServiceSettingsId"]?.ToString(), out Guid id),
+                Id = row["New_BankServiceSettingsId"]?.ToString(),
+                Password = row["new_new_EncryptPassword"]?.ToString() ?? string.Empty
+            })
+            .Where(row => row.HasId && !string.IsNullOrWhiteSpace(row.Id))
+            .Select(row => (Guid.Parse(row.Id!), row.Password))
+            .ToList();
+
+        if (updates.Count == 0)
+        {
+            MessageBox.Show(this, "Seçilen satırlarda geçerli bir kayıt bulunamadı.", "Geçersiz kayıt", MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        ToggleButtonsWhileLoading(true);
+
+        try
+        {
+            int updatedCount = await _repository.UpdatePasswordsAsync(updates);
+            MessageBox.Show(this, $"{updatedCount} kayıt başarıyla güncellendi.", "İşlem tamamlandı", MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Kayıtlar güncellenemedi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            ToggleButtonsWhileLoading(false);
+        }
     }
 
     private void HandleSecondaryAction()

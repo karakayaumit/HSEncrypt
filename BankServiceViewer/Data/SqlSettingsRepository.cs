@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -49,6 +50,51 @@ public class SqlSettingsRepository : ISqlSettingsRepository
         adapter.Fill(table);
 
         return table;
+    }
+
+    public async Task<int> UpdatePasswordsAsync(IEnumerable<(Guid Id, string EncryptedPassword)> updates)
+    {
+        if (updates is null)
+        {
+            throw new ArgumentNullException(nameof(updates));
+        }
+
+        var updatesList = updates.ToList();
+
+        if (updatesList.Count == 0)
+        {
+            return 0;
+        }
+
+        const string updateQuery =
+            "UPDATE vNew_BankServiceSettings SET new_Password = @Password WHERE New_BankServiceSettingsId = @Id";
+
+        using var connection = new SqlConnection(_currentConnectionString);
+        await connection.OpenAsync();
+
+        using var transaction = connection.BeginTransaction();
+        int affectedRows = 0;
+
+        try
+        {
+            foreach (var (id, encryptedPassword) in updatesList)
+            {
+                using var command = new SqlCommand(updateQuery, connection, transaction);
+                command.Parameters.AddWithValue("@Id", id);
+                command.Parameters.AddWithValue("@Password", encryptedPassword);
+
+                affectedRows += await command.ExecuteNonQueryAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+        return affectedRows;
     }
 
     private static async Task CreateBackupIfNeededAsync(SqlConnection connection)

@@ -49,7 +49,7 @@ public partial class MainForm
         _primaryActionButton.AutoSize = true;
         _primaryActionButton.Margin = new Padding(5);
         _primaryActionButton.Enabled = false;
-        _primaryActionButton.Click += (_, _) => HandlePrimaryAction();
+        _primaryActionButton.Click += async (_, _) => await HandlePrimaryActionAsync();
 
         _secondaryActionButton.Text = "Detay Göster";
         _secondaryActionButton.AutoSize = true;
